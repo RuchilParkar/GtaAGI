@@ -3,15 +3,42 @@
 from functionz.core.framework import func
 
 @func.register_function(
-    metadata={"description": "GPT Call function using LiteLLm"},
-    imports=["litellm"],
-    key_dependencies=["openai_api_key"]
+    metadata={"description": "LLM Call function using LiteLLM (supports Gemini and OpenAI)"},
+    imports=["litellm", "os"]
 )
 def gpt_call(prompt: str) -> str:
     from litellm import completion
+    import os
+
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
+
     messages = [{"role": "user", "content": prompt}]
-    response = completion(model="gpt-4o", messages=messages)
-    return response['choices'][0]['message']['content']
+
+    if gemini_key:
+        preferred = os.getenv("GEMINI_MODEL")
+        candidates = [preferred] if preferred else ["gemini/gemini-2.5-flash", "gemini/gemini-2.0-flash", "gemini/gemini-2.0-flash-lite"]
+        last_err = None
+        for model in candidates:
+            if not model:
+                continue
+            try:
+                response = completion(model=model, messages=messages)
+                return response['choices'][0]['message']['content']
+            except Exception as e:
+                err_str = str(e).lower()
+                if "not found" in err_str or "404" in err_str or "not supported" in err_str:
+                    last_err = e
+                    continue
+                raise
+        if last_err:
+            raise last_err
+    elif openai_key:
+        model = os.getenv("OPENAI_MODEL", "gpt-4o")
+        response = completion(model=model, messages=messages)
+        return response['choices'][0]['message']['content']
+    else:
+        raise ValueError("No API key configured. Please set GEMINI_API_KEY or OPENAI_API_KEY in .env")
 
 @func.register_function(
     metadata={"description": "Generates a description for a function using LiteLLm"},

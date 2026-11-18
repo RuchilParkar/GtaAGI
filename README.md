@@ -1,4 +1,4 @@
-# BabyAGI
+# GtaAGI
 
 > [!NOTE]
 > The original BabyAGI from March 2023 introduced task planning as a method for developing autonomous agents. This project has been archived and moved to the [babyagi_archive](https://github.com/yoheinakajima/babyagi_archive) repo (September 2024 snapshot).
@@ -8,7 +8,7 @@
 
 ---
 
-This newest BabyAGI is an experimental framework for a self-building autonomous agent. Earlier efforts to expand BabyAGI have made it clear that the optimal way to build a general autonomous agent is to build the simplest thing that can build itself.
+GtaAGI is an experimental framework for a self-building autonomous agent. Earlier efforts to expand autonomous agents have made it clear that the optimal way to build a general autonomous agent is to build the simplest thing that can build itself.
 
 Check out [this introductory X/Twitter thread](https://x.com/yoheinakajima/status/1840678823681282228) for a simple overview.
 
@@ -34,13 +34,13 @@ The core is a new function framework (**functionz**) for storing, managing, and 
 
 To quickly check out the dashboard and see how it works:
 
-1. **Install BabyAGI:**
+1. **Install GtaAGI:**
 
     ```bash
     pip install babyagi
     ```
 
-2. **Import BabyAGI and load the dashboard:**
+2. **Import and load the GtaAGI dashboard:**
 
     ```python
     import babyagi
@@ -52,7 +52,7 @@ To quickly check out the dashboard and see how it works:
 
 3. **Navigate to the dashboard:**
 
-    Open your browser and go to `http://localhost:8080/dashboard` to access the BabyAGI dashboard.
+    Open your browser and go to `http://localhost:8080/dashboard` to access the GtaAGI dashboard.
     
 ## Basic Usage
 
@@ -110,7 +110,7 @@ def cylinder_volume(radius, height):
 
 ## Function Loading
 
-In addition to using `register_function`, you can use `load_function` to load plugins or draft packs of functions. BabyAGI comes with built-in function packs, or you can load your own packs by pointing to the file path.
+In addition to using `register_function`, you can use `load_function` to load plugins or draft packs of functions. GtaAGI comes with built-in function packs, or you can load your own packs by pointing to the file path.
 
 You can find available function packs in `babyagi/functionz/packs`.
 
@@ -144,11 +144,11 @@ Navigate to the dashboard and use the **add_key_wrapper** feature to securely ad
 
 ## Execution Environment
 
-BabyAGI automatically loads essential function packs and manages their dependencies, ensuring a seamless execution environment. Additionally, it logs all activities, including the relationships between functions, to provide comprehensive tracking of function executions and dependencies.
+GtaAGI automatically loads essential function packs and manages their dependencies, ensuring a seamless execution environment. Additionally, it logs all activities, including the relationships between functions, to provide comprehensive tracking of function executions and dependencies.
 
 ### Log
 
-BabyAGI implements a comprehensive logging system to track all function executions and their interactions. The logging mechanism ensures that every function call, including its inputs, outputs, execution time, and any errors, is recorded for monitoring and debugging purposes.
+GtaAGI implements a comprehensive logging system to track all function executions and their interactions. The logging mechanism ensures that every function call, including its inputs, outputs, execution time, and any errors, is recorded for monitoring and debugging purposes.
 
 **Key Logging Features:**
 
@@ -166,11 +166,11 @@ BabyAGI implements a comprehensive logging system to track all function executio
 
 Triggers are mechanisms that allow certain functions to be automatically executed in response to specific events or actions within the system. For example, when a function is added or updated, a trigger can initiate the generation of a description for that function.
 
-Triggers enhance the autonomy of BabyAGI by enabling automated workflows and reducing the need for manual intervention. However, it's essential to manage triggers carefully to avoid unintended recursive executions or conflicts between dependent functions.
+Triggers enhance the autonomy of GtaAGI by enabling automated workflows and reducing the need for manual intervention. However, it's essential to manage triggers carefully to avoid unintended recursive executions or conflicts between dependent functions.
 
 ## Dashboard
 
-The BabyAGI dashboard offers a user-friendly interface for managing functions, monitoring executions, and handling configurations. Key features include:
+The GtaAGI dashboard offers a user-friendly interface for managing functions, monitoring executions, and handling configurations. Key features include:
 
 - **Function Management:** Register, deregister, and update functions directly from the dashboard.
 
@@ -184,10 +184,10 @@ The BabyAGI dashboard offers a user-friendly interface for managing functions, m
 
 **Accessing the Dashboard:**
 
-After running your application, navigate to `http://localhost:8080/dashboard` to access the BabyAGI dashboard.
+After running your application, navigate to `http://localhost:8080/dashboard` to access the GtaAGI dashboard.
 ## Pre-loaded Functions Summary
 
-BabyAGI includes two pre-loaded function packs:
+GtaAGI includes two pre-loaded function packs:
 
 1. **Default Functions (`packs/default_functions.py`):**
    - **Function Execution:** Run, add, update, or retrieve functions and versions.
@@ -201,7 +201,7 @@ BabyAGI includes two pre-loaded function packs:
 
 ## Running a Self-Building Agent
 
-BabyAGI includes two experimental self-building agents, showcasing how the framework can help a self-building coding agent leverage existing functions to write new ones.
+GtaAGI includes two experimental self-building agents, showcasing how the framework can help a self-building coding agent leverage existing functions to write new ones.
 
 ### 1. `process_user_input` in the `code_writing_functions` pack
 
@@ -255,4 +255,4 @@ If you are a dev, investor, friend of open-source and interesting supporting AI 
 
 ## License
 
-BabyAGI is released under the MIT License. See the [LICENSE](LICENSE) file for more details.
+GtaAGI is released under the MIT License. See the [LICENSE](LICENSE) file for more details.

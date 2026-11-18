@@ -19,7 +19,7 @@ print(hello_world())
 
 @app.route('/')
 def home():
-    return f"Welcome to the main app. Visit <a href=\"/dashboard\">/dashboard</a> for BabyAGI dashboard."
+    return f"Welcome to the main app. Visit <a href=\"/dashboard\">/dashboard</a> for GtaAGI dashboard."
 
 if __name__ == "__main__":
     app = babyagi.create_app('/dashboard')

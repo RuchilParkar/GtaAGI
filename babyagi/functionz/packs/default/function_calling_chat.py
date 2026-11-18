@@ -9,9 +9,8 @@ import litellm
     metadata={
         "description": "A chat application that interacts with LiteLLM and executes selected functions from the database."
     },
-    imports=["litellm", "json"],
-    dependencies=["get_function_wrapper", "execute_function_wrapper"],
-    key_dependencies=["OPENAI_API_KEY"]  # Ensure this key is set in your environment
+    imports=["litellm", "json", "os"],
+    dependencies=["get_function_wrapper", "execute_function_wrapper"]
 )
 def chat_with_functions(chat_history, available_function_names) -> str:
     def map_python_type_to_json(python_type: str) -> dict:
@@ -82,7 +81,7 @@ def chat_with_functions(chat_history, available_function_names) -> str:
                 "type": "function",
                 "function": {
                     "name": function_data['name'],
-                    "description": function_data['metadata']['description'],
+                    "description": (function_data.get('metadata') or {}).get('description', f"Function {function_data['name']}"),
                     "parameters": {
                         "type": "object",
                         "properties": {},
@@ -108,29 +107,97 @@ def chat_with_functions(chat_history, available_function_names) -> str:
             raise ValueError(f"Function '{func_name}' not found in the database.")
 
 
-    # Call LiteLLM's completion API with the user message and available tools
-    response = litellm.completion(
-        model="gpt-4-turbo",
-        messages=chat_context,
-        tools=tools,
-        tool_choice="auto"
-    )
+    import os
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    openai_key = os.getenv("OPENAI_API_KEY")
 
-    # Extract the message from the response
-    response_message = response['choices'][0]['message']
+    if gemini_key:
+        try:
+            import litellm.llms.vertex_ai_and_google_ai_studio.gemini.vertex_and_google_ai_studio_gemini as gemini_module
+            import litellm.llms.vertex_ai_and_google_ai_studio.gemini.transformation as trans_module
 
-    # Check if the model wants to call any functions
-    tool_calls = response_message.get('tool_calls', [])
+            if not getattr(gemini_module, "_thought_sig_patched", False):
+                orig_transform_parts = gemini_module.VertexGeminiConfig._transform_parts
 
-    # If there are function calls, execute them
-    if tool_calls:
+                def _patched_transform_parts(self, parts, index, is_function_call=False):
+                    function, tools_list = orig_transform_parts(self, parts, index, is_function_call)
+                    if tools_list:
+                        for i, part in enumerate(parts):
+                            if "functionCall" in part and i < len(tools_list):
+                                ts = part.get("thoughtSignature") or part.get("thought_signature")
+                                if ts:
+                                    tools_list[i]["thoughtSignature"] = ts
+                    return function, tools_list
+
+                gemini_module.VertexGeminiConfig._transform_parts = _patched_transform_parts
+
+                orig_convert = trans_module.convert_to_gemini_tool_call_invoke
+
+                def _patched_convert(message):
+                    parts = orig_convert(message)
+                    t_calls = message.get("tool_calls", [])
+                    for i, tc in enumerate(t_calls):
+                        ts = tc.get("thoughtSignature") if isinstance(tc, dict) else getattr(tc, "thoughtSignature", None)
+                        if not ts:
+                            ts = tc.get("thought_signature") if isinstance(tc, dict) else getattr(tc, "thought_signature", None)
+                        if ts and i < len(parts):
+                            parts[i]["thoughtSignature"] = ts
+                    return parts
+
+                trans_module.convert_to_gemini_tool_call_invoke = _patched_convert
+                gemini_module._thought_sig_patched = True
+        except Exception:
+            pass
+
+    def _call_completion(messages, tools=None):
+        if gemini_key:
+            preferred = os.getenv("GEMINI_MODEL")
+            candidates = [preferred] if preferred else ["gemini/gemini-3.1-flash-lite", "gemini/gemini-3.5-flash", "gemini/gemini-2.5-flash"]
+            last_err = None
+            for model in candidates:
+                if not model:
+                    continue
+                try:
+                    kwargs = {"model": model, "messages": messages}
+                    if tools:
+                        kwargs["tools"] = tools
+                        kwargs["tool_choice"] = "auto"
+                    return litellm.completion(**kwargs)
+                except Exception as e:
+                    err_str = str(e).lower()
+                    if "not found" in err_str or "404" in err_str or "not supported" in err_str:
+                        last_err = e
+                        continue
+                    raise
+            if last_err:
+                raise last_err
+        elif openai_key:
+            model = os.getenv("OPENAI_CHAT_MODEL", "gpt-4-turbo")
+            kwargs = {"model": model, "messages": messages}
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+            return litellm.completion(**kwargs)
+        else:
+            raise ValueError("No API key configured. Please set GEMINI_API_KEY or OPENAI_API_KEY in .env")
+
+    # Multi-turn tool execution loop
+    max_turns = 5
+    for _ in range(max_turns):
+        response = _call_completion(chat_context, tools=tools)
+        response_message = response['choices'][0]['message']
+        tool_calls = response_message.get('tool_calls', [])
+
+        if not tool_calls:
+            return response_message.get('content', '')
+
         # Append the assistant's message to the chat context
         chat_context.append(response_message)
 
         for tool_call in tool_calls:
             function_name = tool_call['function']['name']
             function_args = json.loads(tool_call['function']['arguments'])
-            tool_call_id = tool_call['id']  # Extract the tool_call_id
+            tool_call_id = tool_call['id']
 
             # Execute the function using execute_function_wrapper
             try:
@@ -144,22 +211,10 @@ def chat_with_functions(chat_history, available_function_names) -> str:
 
             # Append the function response to the chat context
             chat_context.append({
-                "tool_call_id": tool_call_id,  # Include the tool_call_id
-                "role": "tool",  # Use 'tool' as per LiteLLM's protocol
+                "tool_call_id": tool_call_id,
+                "role": "tool",
                 "name": function_name,
                 "content": function_response
             })
 
-        # Call LiteLLM again with the updated context including function responses
-        second_response = litellm.completion(
-            model="gpt-4-turbo",
-            messages=chat_context
-        )
-
-        # Extract and return the assistant's final response
-        assistant_response = second_response['choices'][0]['message']['content']
-        return assistant_response
-    else:
-        # If no functions are called, return the assistant's message directly
-        assistant_response = response_message.get('content', '')
-        return assistant_response
+    return response_message.get('content', '')

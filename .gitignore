@@ -162,3 +162,4 @@ cython_debug/
 # Custom ignores
 funztionz.db
 encryption_key.json
+litellm_uuid.txt

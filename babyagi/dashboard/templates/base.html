@@ -4,7 +4,7 @@
     {% block head %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}PythonFunc Dashboard{% endblock %}</title>
+    <title>{% block title %}GtaAGI Dashboard{% endblock %}</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Include external CSS -->
     <link rel="stylesheet" href="{{ url_for('dashboard.static', filename='css/style.css') }}">
@@ -14,6 +14,7 @@
     <!-- Include the navigation menu outside the container for styling purposes -->
     <nav>
         <ul>
+            <li class="brand"><a href="{{ url_for('dashboard.dashboard_home') }}" style="font-weight: 700; font-size: 15px; color: #3498db; letter-spacing: 0.5px;">GtaAGI</a></li>
             <li><a href="{{ url_for('dashboard.dashboard_home') }}">Home</a></li>
             <li><a href="{{ url_for('dashboard.function_graph') }}">Graph</a></li>
             <li><a href="{{ url_for('dashboard.function_graph_mermaid') }}">Mermaid Graph</a></li>

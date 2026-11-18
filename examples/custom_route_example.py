@@ -10,7 +10,7 @@ def another_custom_function():
 
 @app.route('/')
 def home():
-    return f"Welcome to the main app. Visit <a href=\"/dashboard\">/dashboard</a> for BabyAGI dashboard."
+    return f"Welcome to the main app. Visit <a href=\"/dashboard\">/dashboard</a> for GtaAGI dashboard."
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8080)
